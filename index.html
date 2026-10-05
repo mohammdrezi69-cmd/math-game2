@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>بازی ریاضی - ارزش مکانی</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: Tahoma, 'Segoe UI', sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+  }
+  .container {
+    background: #fff;
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    max-width: 750px;
+    width: 100%;
+    padding: 30px;
+    position: relative;
+  }
+  h1 {
+    text-align: center;
+    color: #4a3f8f;
+    margin-bottom: 15px;
+    font-size: 24px;
+  }
+  .stats {
+    display: flex;
+    justify-content: space-between;
+    background: #f0f0fa;
+    border-radius: 12px;
+    padding: 12px 18px;
+    margin-bottom: 20px;
+    font-size: 14px;
+    color: #4a3f8f;
+    font-weight: bold;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .stats span { display: flex; align-items: center; gap: 5px; }
+  .timer.warning { color: #e74c3c; animation: pulse 1s infinite; }
+  @keyframes pulse { 50% { opacity: 0.5; } }
+
+  .card {
+    background: #fafaff;
+    border: 3px solid #764ba2;
+    border-radius: 15px;
+    padding: 20px;
+    margin-bottom: 20px;
+    min-height: 120px;
+  }
+  .card-title {
+    color: #764ba2;
+    font-weight: bold;
+    margin-bottom: 12px;
+    font-size: 16px;
+    border-bottom: 2px dashed #ddd;
+    padding-bottom: 8px;
+  }
+  .question {
+    font-size: 16px;
+    line-height: 1.9;
+    color: #333;
+    text-align: justify;
+  }
+  .options {
+    display: grid;
+    gap: 10px;
+    margin-bottom: 15px;
+  }
+  .option {
+    background: #fff;
+    border: 2px solid #d0c8e8;
+    border-radius: 12px;
+    padding: 14px 18px;
+    cursor: pointer;
+    transition: all 0.25s;
+    font-size: 15px;
+    color: #333;
+    text-align: right;
+    font-family: inherit;
+  }
+  .option:hover:not(:disabled) {
+    background: #f0eaff;
+    border-color: #764ba2;
+    transform: translateX(-5px);
+  }
+  .option:disabled { cursor: not-allowed; }
+  .option.correct {
+    background: #d4f5d4;
+    border-color: #27ae60;
+    color: #1a7a1a;
+    font-weight: bold;
+  }
+  .option.wrong {
+    background: #ffd4d4;
+    border-color: #e74c3c;
+    color: #a01a1a;
+  }
+  .feedback {
+    border-radius: 12px;
+    padding: 15px;
+    margin-top: 15px;
+    font-size: 15px;
+    line-height: 1.9;
+    display: none;
+    animation: fadeIn 0.4s;
+  }
+  .feedback.show { display: block; }
+  .feedback.correct-fb {
+    background: #e8f8e8;
+    border-right: 5px solid #27ae60;
+    color: #1a5c1a;
+  }
+  .feedback.wrong-fb {
+    background: #fdecea;
+    border-right: 5px solid #e74c3c;
+    color: #7a1a1a;
+  }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+  .btn {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    padding: 14px 30px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    font-family: inherit;
+    transition: transform 0.2s, box-shadow 0.2s;
+    display: block;
+    margin: 0 auto;
+  }
+  .btn:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(118,75,162,0.4); }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+  .result-screen {
+    text-align: center;
+    display: none;
+  }
+  .result-screen.show { display: block; }
+  .result-screen h2 { color: #764ba2; margin-bottom: 20px; font-size: 26px; }
+  .score-circle {
+    width: 160px;
+    height: 160px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    margin: 0 auto 25px;
+    font-size: 40px;
+    font-weight: bold;
+    box-shadow: 0 10px 30px rgba(118,75,162,0.5);
+  }
+  .score-circle small { font-size: 14px; font-weight: normal; opacity: 0.9; }
+  .result-details {
+    background: #f0f0fa;
+    border-radius: 12px;
+    padding: 18px;
+    margin-bottom: 20px;
+    font-size: 15px;
+    line-height: 2;
+    color: #4a3f8f;
+  }
+  .message { font-size: 18px; color: #764ba2; font-weight: bold; margin-bottom: 20px; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>🎮 بازی ارزش مکانی و اعداد بزرگ</h1>
+
+  <div class="stats">
+    <span>⏱ زمان: <span id="timer" class="timer">۲۰:۰۰</span></span>
+    <span>🃏 سؤال: <span id="qCounter">۰ / ۱۰</span></span>
+    <span>✅ درست: <span id="correctCount">۰</span></span>
+    <span>🔁 دفعات بازی: <span id="playCount">۰</span></span>
+  </div>
+
+  <div id="gameArea">
+    <div class="card">
+      <div class="card-title" id="cardTitle">کارت شماره ۱</div>
+      <div class="question" id="questionText">...</div>
+    </div>
+    <div class="options" id="optionsBox"></div>
+    <div class="feedback" id="feedback"></div>
+    <button class="btn" id="nextBtn" disabled>سؤال بعدی ➡️</button>
+  </div>
+
+  <div class="result-screen" id="resultScreen">
+    <h2>🏆 پایان بازی!</h2>
+    <div class="score-circle">
+      <span id="finalScore">۰</span>
+      <small>از ۱۰</small>
+    </div>
+    <div class="message" id="resultMessage"></div>
+    <div class="result-details" id="resultDetails"></div>
+    <button class="btn" id="restartBtn">🔄 بازی مجدد</button>
+  </div>
+</div>
+
+<script>
+const cards = [
+  {
+    title: "کارت شماره ۱",
+    question: "در عدد ۱۱ رقمی ۳۷,۰۶۷,۹۱۰,۵۴۲، رقم «۰» در کدام مرتبه‌ها قرار گرفته است؟",
+    options: [
+      "صدگان میلیون و دهگان میلیارد",
+      "صدگان میلیارد و صدگان میلیون",
+      "صدگان میلیارد، صدگان میلیون و یکان هزار",
+      "دهگان میلیارد، صدگان میلیون و یکان هزار"
+    ],
+    correct: 2,
+    feedback: "آفرین! این عدد ۱۱ رقمی است؛ بنابراین رقم صدگان میلیارد آن صفر است. همچنین در طبقه میلیون (۰۶۷) و طبقه هزار (۹۱۰) دو صفر دیگر در مرتبه‌های صدگان میلیون و یکان هزار داریم."
+  },
+  {
+    title: "کارت شماره ۲",
+    question: "صورت رقمی درست برای عبارت «پنجاه و سه میلیارد و چهل و دو میلیون و یکصد و شصت و نه هزار و هفتاد و هفت» کدام گزینه است؟",
+    options: [
+      "۵۳,۰۴۲,۱۶۹,۷۷",
+      "۵۳,۰۴۲,۱۶۹,۰۷۷",
+      "۵۳,۴۲۱,۶۹,۰۷۷",
+      "۵۳۰,۴۲۱,۶۹۰,۷۷"
+    ],
+    correct: 1,
+    feedback: "عالی بود! نباید صفرهای مرتبه‌های خالی را فراموش کرد. در طبقه میلیون مرتبه صدگان میلیون (۰۴۲) و در طبقه یکی‌ها مرتبه صدگان (۰۷۷) صفر هستند."
+  },
+  {
+    title: "کارت شماره ۳",
+    question: "با کارت‌های رقم ۰ تا ۹ (بدون تکرار رقم‌ها)، بزرگ‌ترین عدد ۱۰ رقمی فرد کدام است؟",
+    options: [
+      "۹,۸۷۶,۵۴۳,۲۱۰",
+      "۹,۸۷۶,۵۴۳,۲۰۱",
+      "۹,۸۷۶,۵۴۳,۱۰۲",
+      "۹,۸۷۶,۵۴۳,۰۱۲"
+    ],
+    correct: 1,
+    feedback: "درست حدس زدی! برای ساخت بزرگ‌ترین عدد، ارقام را از بزرگ به کوچک می‌چینیم؛ اما چون عدد باید فرد باشد، کوچک‌ترین رقم فرد یعنی ۱ در یکان قرار می‌گیرد."
+  },
+  {
+    title: "کارت شماره ۴",
+    question: "جمعیت کشور سوئد ۹,۴۱۲,۰۰۰ نفر است. مقدار تقریبی جمعیت این کشور با تقریب یک میلیون (با حذف رقم‌ها) چقدر است؟",
+    options: [
+      "۹,۵۰۰,۰۰۰",
+      "۹,۴۰۰,۰۰۰",
+      "۹,۰۰۰,۰۰۰",
+      "۱۰,۰۰۰,۰۰۰"
+    ],
+    correct: 2,
+    feedback: "کاملاً درست! با تقریب یک میلیون و حذف رقم‌های بعد از یکان میلیون، تمام ارقام بعد از ۹ صفر می‌شوند و عدد ۹,۰۰۰,۰۰۰ به دست می‌آید."
+  },
+  {
+    title: "کارت شماره ۵",
+    question: "تعداد مشترکان تلفن همراه در یک آمار رسمی ۶۳,۸۳۱,۵۶۸ نفر ثبت شده است. کدام رقم در این عدد دارای ارزش مکانی صدگان هزار است؟",
+    options: ["۶", "۳", "۸", "۱"],
+    correct: 2,
+    feedback: "احسنت! در طبقه هزارها (۸۳۱ هزار)، رقم ۸ در مرتبه صدگان هزار قرار دارد."
+  },
+  {
+    title: "کارت شماره ۶",
+    question: "در عدد ۶۳,۸۳۱,۵۶۸ دو رقم ۳ وجود دارد. ارزش مکانی این دو رقم از چپ به راست به ترتیب کدام است؟",
+    options: [
+      "دهگان میلیون و دهگان هزار",
+      "یکان میلیون و دهگان هزار",
+      "یکان میلیون و یکان هزار",
+      "دهگان میلیون و صدگان هزار"
+    ],
+    correct: 1,
+    feedback: "پاسخ صحیح! اولین رقم ۳ از چپ در مرتبه یکان میلیون (۳,۰۰۰,۰۰۰) و دومین رقم ۳ در مرتبه دهگان هزار (۳۰,۰۰۰) جای دارد."
+  },
+  {
+    title: "کارت شماره ۷",
+    question: "اگر عدد ۶۳,۸۳۱,۵۶۸ در ۱۰۰ ضرب شود، ارزش مکانی رقم ۱ که در مرتبه یکان هزار است چه تغییری می‌کند؟",
+    options: [
+      "از یکان هزار به دهگان هزار منتقل می‌شود.",
+      "از یکان هزار به صدگان هزار منتقل می‌شود.",
+      "از دهگان هزار به صدگان هزار منتقل می‌شود.",
+      "از یکان هزار به یکان میلیون منتقل می‌شود."
+    ],
+    correct: 1,
+    feedback: "ماشالله! با ضرب در ۱۰۰، تمام ارقام ۲ مرتبه در جدول ارزش مکانی به سمت چپ (مرتبه‌های بزرگ‌تر) حرکت می‌کنند."
+  },
+  {
+    title: "کارت شماره ۸",
+    question: "تعداد تماشاگران یک دوره از جام جهانی ۳,۴۲۹,۸۷۳ نفر بوده است. ارزش مکانی رقم ۴ در این عدد کدام است؟",
+    options: ["دهگان هزار", "صدگان هزار", "یکان میلیون", "صدگان"],
+    correct: 1,
+    feedback: "درست گفتی! در طبقه هزارها (۴۲۹ هزار)، رقم ۴ در مرتبه صدگان هزار جای گرفته است."
+  },
+  {
+    title: "کارت شماره ۹",
+    question: "فاصله زمین تا خورشید ۶۸۰,۰۰۰,۱۴۹ کیلومتر است. روی محوری که با واحدهای ۱۰۰ میلیونی مدرج شده، این عدد بین کدام دو نقطه جای دارد و به کدام نزدیک‌تر است؟",
+    options: [
+      "بین ۵۰۰ میلیون و ۶۰۰ میلیون، نزدیک‌تر به ۶۰۰ میلیون",
+      "بین ۶۰۰ میلیون و ۷۰۰ میلیون، نزدیک‌تر به ۷۰۰ میلیون",
+      "بین ۷۰۰ میلیون و ۸۰۰ میلیون، نزدیک‌تر به ۷۰۰ میلیون",
+      "بین ۶۰۰ میلیون و ۷۰۰ میلیون، نزدیک‌تر به ۶۰۰ میلیون"
+    ],
+    correct: 1,
+    feedback: "عالی! ۶۸۰ میلیون بین ۶۰۰ و ۷۰۰ میلیون است و چون از ۶۵۰ میلیون گذشته، به ۷۰۰ میلیون نزدیک‌تر است."
+  },
+  {
+    title: "کارت شماره ۱۰",
+    question: "صورت گسترده عدد ۴۰۰,۷۰۰,۰۶۰ کدام گزینه است؟",
+    options: [
+      "۴۰۰,۰۰۰,۰۰۰ + ۷۰,۰۰۰ + ۶۰",
+      "۴۰۰,۰۰۰,۰۰۰ + ۷۰۰,۰۰۰ + ۶۰",
+      "۴,۰۰۰,۰۰۰,۰۰۰ + ۷۰۰,۰۰۰ + ۶۰",
+      "۴۰,۰۰۰,۰۰۰ + ۷۰۰,۰۰۰ + ۶۰۰"
+    ],
+    correct: 1,
+    feedback: "آفرین! این عدد از ۴۰۰ میلیون + ۷۰۰ هزار + ۶۰ یکی تشکیل شده است."
+  }
+];
+
+let currentIndex = 0;
+let correctAnswers = 0;
+let timeLeft = 20 * 60;
+let timerInterval = null;
+let answered = false;
+let gameOver = false;
+let playCount = parseInt(localStorage.getItem('mathGamePlayCount') || '0', 10);
+
+const timerEl = document.getElementById('timer');
+const qCounterEl = document.getElementById('qCounter');
+const correctCountEl = document.getElementById('correctCount');
+const playCountEl = document.getElementById('playCount');
+const cardTitle = document.getElementById('cardTitle');
+const questionText = document.getElementById('questionText');
+const optionsBox = document.getElementById('optionsBox');
+const feedback = document.getElementById('feedback');
+const nextBtn = document.getElementById('nextBtn');
+const gameArea = document.getElementById('gameArea');
+const resultScreen = document.getElementById('resultScreen');
+const finalScore = document.getElementById('finalScore');
+const resultMessage = document.getElementById('resultMessage');
+const resultDetails = document.getElementById('resultDetails');
+const restartBtn = document.getElementById('restartBtn');
+
+function toPersian(n) {
+  return String(n).replace(/\d/g, d => '۰۱۲۳۴۵۶۷۸۹'[d]);
+}
+
+function formatTime(sec) {
+  const m = Math.floor(sec / 60);
+  const s = sec % 60;
+  return toPersian(m) + ':' + toPersian(String(s).padStart(2, '0'));
+}
+
+function startGame() {
+  currentIndex = 0;
+  correctAnswers = 0;
+  timeLeft = 20 * 60;
+  gameOver = false;
+  playCount++;
+  localStorage.setItem('mathGamePlayCount', playCount);
+  playCountEl.textContent = toPersian(playCount);
+
+  gameArea.style.display = 'block';
+  resultScreen.classList.remove('show');
+
+  updateStats();
+  startTimer();
+  loadCard(0);
+}
+
+function startTimer() {
+  clearInterval(timerInterval);
+  timerEl.classList.remove('warning');
+  timerEl.textContent = formatTime(timeLeft);
+  timerInterval = setInterval(() => {
+    timeLeft--;
+    timerEl.textContent = formatTime(timeLeft);
+    if (timeLeft <= 60) timerEl.classList.add('warning');
+    if (timeLeft <= 0) {
+      clearInterval(timerInterval);
+      endGame(true);
+    }
+  }, 1000);
+}
+
+function updateStats() {
+  qCounterEl.textContent = toPersian(currentIndex + 1) + ' / ' + toPersian(cards.length);
+  correctCountEl.textContent = toPersian(correctAnswers);
+}
+
+function loadCard(index) {
+  answered = false;
+  const card = cards[index];
+
+  cardTitle.textContent = card.title;
+  questionText.textContent = card.question;
+  feedback.className = 'feedback';
+  feedback.textContent = '';
+  nextBtn.disabled = true;
+  nextBtn.textContent = (index === cards.length - 1) ? 'پایان بازی 🏁' : 'سؤال بعدی ➡️';
+
+  optionsBox.innerHTML = '';
+  card.options.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'option';
+    btn.textContent = opt;
+    btn.onclick = () => checkAnswer(i, btn);
+    optionsBox.appendChild(btn);
+  });
+
+  updateStats();
+}
+
+function checkAnswer(selected, btn) {
+  if (answered || gameOver) return;
+  answered = true;
+
+  const card = cards[currentIndex];
+  const allOptions = optionsBox.querySelectorAll('.option');
+  allOptions.forEach((o, i) => {
+    o.disabled = true;
+    if (i === card.correct) o.classList.add('correct');
+  });
+
+  if (selected === card.correct) {
+    correctAnswers++;
+    feedback.className = 'feedback show correct-fb';
+    feedback.innerHTML = '✅ ' + card.feedback;
+    correctCountEl.textContent = toPersian(correctAnswers);
+  } else {
+    btn.classList.add('wrong');
+    feedback.className = 'feedback show wrong-fb';
+    feedback.innerHTML = '❌ پاسخ درست: <strong>' + card.options[card.correct] + '</strong><br>' + card.feedback;
+  }
+
+  nextBtn.disabled = false;
+}
+
+nextBtn.onclick = () => {
+  if (currentIndex < cards.length - 1) {
+    currentIndex++;
+    loadCard(currentIndex);
+  } else {
+    endGame(false);
+  }
+};
+
+function endGame(timeUp) {
+  gameOver = true;
+  clearInterval(timerInterval);
+  gameArea.style.display = 'none';
+  resultScreen.classList.add('show');
+
+  finalScore.textContent = toPersian(correctAnswers);
+
+  let msg = '';
+  const percent = (correctAnswers / cards.length) * 100;
+  if (percent === 100) msg = '🌟 فوق‌العاده! تمام پاسخ‌ها درست بود!';
+  else if (percent >= 80) msg = '👏 عالی بود! تسلط خوبی داری.';
+  else if (percent >= 60) msg = '🙂 خوب بود، با کمی تمرین بهتر می‌شوی.';
+  else if (percent >= 40) msg = '💪 نیاز به تمرین بیشتر داری.';
+  else msg = '📚 بهتر است درس را دوباره مرور کنی.';
+
+  if (timeUp) msg = '⏰ زمان تمام شد! ' + msg;
+  resultMessage.textContent = msg;
+
+  resultDetails.innerHTML = `
+    🃏 تعداد سؤال‌ها: ${toPersian(cards.length)}<br>
+    ✅ پاسخ‌های درست: ${toPersian(correctAnswers)}<br>
+    ❌ پاسخ‌های نادرست: ${toPersian(cards.length - correctAnswers)}<br>
+    📊 درصد موفقیت: ${toPersian(Math.round(percent))}٪<br>
+    ⏱ زمان باقی‌مانده: ${formatTime(timeLeft)}<br>
+    🔁 تعداد دفعات انجام این بازی: ${toPersian(playCount)}
+  `;
+}
+
+restartBtn.onclick = startGame;
+
+playCountEl.textContent = toPersian(playCount);
+startGame();
+</script>
+</body>
+</html>
